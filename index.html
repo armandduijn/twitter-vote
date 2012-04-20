@@ -10,71 +10,83 @@
         <script type="text/javascript" src="js/jquery.loadingdotdotdot.js"></script>
         <script type="text/javascript">
         $(function(){
-            
-			var Twitter = {
-			  param : "?q=%231998282&result_type=recent&rpp=100",
-			  refreshRate : 10000,
-			  getTweets : function(){
-			  
-			  }
-			};
-			
-			
-			
-			var refreshRate = 10000; // 10 sec //default: 300000 (5 minutes)
-            var param = "?q=%231998282&result_type=recent&rpp=100"; //query is '#1998282', rpp is amount of results (100 is max)
-            
-			var votes = [
+            var teams = [
                 { label: "H5c", data: 0  },
                 { label: "H5d", data: 0  },
                 { label: "H5e", data: 0  }
             ];
+		
+            var Twitter = {
+                _init : function() {
+                    this.query = this.parseParameters(); //Convert readable paramters into url parameters
+                },
+			    parameters : {
+                    "q" : "%231998282",
+                    "result_type" : "recent",
+                    "rpp" : "100",
+                    "callback" : "?"
+                },
+                refreshRate : 10000,
+                
+                cleanTweet : function ( tweet ) {       
+                    return $.trim(tweet.split("#")[0].replace(/[^a-zA-Z 0-9]+/g,'')); //Remove the hash tag, characters such as '#','!','&' and extra whitespace from the tweet
+                },
+			    getTweets : function( callback ){
+                    console.log(Twitter.query);
+                    $.getJSON("http://search.twitter.com/search.json" + this.query, function( data ){
+                        Twitter.query = data.refresh_url + "&rpp=" + Twitter.parameters.rpp + "&callback=?";
+                        Twitter.parseTweets(data, callback);
+                        
+                    });
 
-            var plotChart = function( data ) {
-                $.plot($("#pieChart"), data, {
+			    },
+                parseParameters : function( data ) {
+                    var temp = '?';
+
+                    for ( key in this.parameters ) {
+                        temp += key + "=" + this.parameters[key] + "&";
+                    }
+    
+                    return temp.slice(0, -1); //Remove the trailing '&' from the query
+                },
+                parseTweets : function( data, fn ) {
+                    if ( data.results.length > 0 ) {
+                        for ( var x = 0, maxResults = data.results.length; x < maxResults; x++ ) {
+                            var vote = this.cleanTweet(data.results[x].text).toLowerCase();
+
+                            for ( var y = 0, maxTeams = teams.length; y < maxTeams; y++ ) {
+                                teamLabel = teams[y].label.toLowerCase();
+                                
+                                if ( vote.indexOf(teamLabel) != -1 ) { //Case insensitive matching
+                                    teams[y].data = teams[y].data + 1; //Increment the vote counter by 1
+                                    break; //Stop looping through results when a match is found
+                                } else {
+                                    continue;
+                                }                        
+                            }           
+                        }
+                        fn();
+                    }
+                }
+			};
+    
+            function plotChart() {
+                $.plot($("#pieChart"), teams, {
                     series : { pie: { show: true } },
                     grid: { hoverable : true, clickable : true}
                 });
-            };
-
-            var getTweets = function( parameters ) {
-                statusMessage('show');
-                $.getJSON("http://search.twitter.com/search.json" + parameters + "&callback=?", function( data ){
-                    param = data.refresh_url + "&rpp=100"; //data.refresh.url contains the id of the newest tweet. When checking for new tweets it will use that id to check if there are new ones.
-                    parseTweets(data);
-                    statusMessage('hide');
-                });
-            };
-
-            var parseTweets = function( data ) {
-                if ( data.results.length > 0 ) {
-                    for ( var i = 0, max = data.results.length; i < max; i++ ) {
-                        var vote = cleanTweet(data.results[i].text).toLowerCase();
-                        
-                        for ( var b = 0, max2 = votes.length; b < max2; b++ ) { //Go through all the teams to add a vote to that team name.
-                            teamLabel = votes[b].label.toLowerCase();
-                                
-                            if ( vote.indexOf(teamLabel) != -1 ) {
-                                votes[b].data = votes[b].data + 1;
-                                break;
-                            } else {
-                                continue;
-                            }                        
-                        }           
-                    }
-                    plotChart(votes);
-                }
-            };
+            }
 
             // RUN
-            getTweets(param);
+            Twitter._init();
+            Twitter.getTweets(plotChart);
 
             $("#pieChart").bind("plothover", pieHover);
             $("#pieChart").bind("plotclick", pieClick);
-        
-            setInterval(function(){
-                getTweets(param);
-            }, refreshRate);
+            
+            var interval = setInterval(function(){
+                Twitter.getTweets(plotChart);
+            }, Twitter.refreshRate);
         });
 
         function pieHover( event, pos, obj ) {
@@ -90,29 +102,7 @@
 	        percent = parseFloat(obj.series.percent).toFixed(2);
             alert(''+obj.series.label+': '+percent+'%');
         }
-
-        function cleanTweet ( tweet ) {
-            var text = tweet.split("#");
-            return $.trim(text[0].replace(/[^a-zA-Z 0-9]+/g,''));
-        }
-
-        function statusMessage( visibility ) {
- console.log('load');            if ( visibility === 'show' ) {
-                $("#status").show();
-                $("#status div").Loadingdotdotdot({
-                    "speed": 120,
-                    "maxDots": 4
-                });
-            } else if ( visibility === 'hide' ) {
-console.log('finish');
-                $("#status div").Loadingdotdotdot("stop");
-                $("#status").hide();
-            }
-        }
         </script>        
-        <!--[if lt IE 9]> 
-            <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script> 
-        <![endif]-->
     </head>
     <body>
         <div id="message">Tweet "<b>klas #1998282</b>" om te stemmen</div>
@@ -121,7 +111,5 @@ console.log('finish');
             <div id="pieChart"></div>
             <div id="hover"></div>
         </section>
-        
-        <div id="status"><div><!-- Loading text --></div></div>
     </body>
 </html>
