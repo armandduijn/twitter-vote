@@ -1,0 +1,17 @@
+html { background: -webkit-radial-gradient(center center, circle, #BB0000 20%,#5B0000 100%) no-repeat; height: 100%; width: 100%; }
+
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #FFF; overflow: hidden; }
+            
+body, div, header, nav, footer, section, article, h1, h2, h3, h4, h5, h6, ul, ol, li, p { margin: 0; padding: 0; }
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section, time { display:block; } 
+
+ul { font-size: 10pt; }ul li { margin-bottom: 0.5em; }ul.options li { list-style: none; margin-bottom: 1em; }ul li i	{ color: #999; }
+
+#message { background: #FFF; margin: -360px 0 0 -170px; width: 340px; line-height: 52px; text-align: center; color: #000; border-radius: 8px; border: 2px solid black; box-shadow: inset 0px 0px 8px #000; display: inline-block; position: absolute; top: 50%; left: 50%; z-index: 1;}
+
+#graph { margin-left: -250px; margin-top: -250px; width: 500px; height: 500px; position: absolute; left: 50%; top: 50%; border: 1px solid pink;}
+    #pieChart { width: 500px; height: 500px; }
+    #pieChart .legend { width: 100px; position: absolute; right: -100px; top: 0px; }
+    #hover { font-size: 24px; line-height: 40px; top: -40px; position: absolute; }    
+
+#status { width: 250px; height: 14px; font-size: 14px; text-shadow: 1px 1px #000; position: absolute; bottom: 18px; right: 18px; }
